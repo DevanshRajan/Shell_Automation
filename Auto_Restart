@@ -1,0 +1,26 @@
+[rocps@VTMHREDROC11 disk_space]$ cat /rocps/Subex_Working_Area/auto_restart/Restart_SS_dev.sh
+#!/bin/bash
+. /home/rocps/.bashrc
+DATE=`date +%Y-%m-%d_%H:%M:%S`
+
+count=`ps -ef | grep ServerService | wc -l`
+
+if [ $count -lt 2 ]
+then
+cd /rocps/ROCPS/bin
+
+tail -n 50000 server.log >> ss_rstart_$DATE.log
+mv ss_rstart_$DATE.log /rocps/Subex_Working_Area/auto_restart/Restart_Logs
+
+cd /rocps/ROCPS/bin
+
+    ./nohup_server.sh
+
+cd /rocps/Subex_Working_Area/auto_restart/
+
+cat Mail_Body_ss.txt| mutt -s "Server Service was restarted on: $DATE" " "   "sharath.shekar@subex.com" "devansh.rajan@subex.com" "parnika.shrivastava@subex.com"
+
+exit 0
+fi
+
+
