@@ -1,0 +1,41 @@
+###############################################################################################
+# --------------------------------------------------------------------------------------------#
+#     Automation Tool Developed by SUBEX Group Inc. for Telstra                               #
+# --------------------------------------------------------------------------------------------#
+#                       Controller Script for Allianz Extract Email Automation                #
+# --------------------------------------------------------------------------------------------#
+#                                                                                             #
+#                      AUTHOR: Devansh Rajan                                                  #
+#                      EMAILID: devansh.rajan@subex.com                                       #
+#                      DONOT MODIFY THE SCRIPT                                                #
+#                                                                         © SUBEX Group Inc. #
+###############################################################################################
+
+#!/bin/bash
+. /home/rocps/.bashrc
+
+#ls  ROC_InvoiceExtract_`date +%Y%m`*.csv
+
+run_path='/rocps/Subex_Working_Area/Rep_Test/Allianz_Extract_Email'
+extract_path='/rocps/Subex_Working_Area/Rep_Test/Allianz_Extract_Email/Extract_sent'
+origional_path='/rocps_data01/DataDirectory/Allianz_Extract'
+#file_of_month=`cd $origional_path;ls  ROC_InvoiceExtract_202104*.csv`
+dt=`date +%Y%m`
+file_of_month=`cd $origional_path;ls  ROC_InvoiceExtract_$dt*.csv`
+count=`ls $extract_path/$file_of_month|wc -l`
+
+cd $run_path
+echo $file_of_month> $run_path/temp.txt
+echo $count>> $run_path/temp.txt
+
+if [ $count -lt 1 ]
+then
+
+cp $origional_path/$file_of_month $extract_path
+
+mutt -e 'set content_type=text/html' -s "$(echo -e " Allianz Extract -`TZ= date +%b-%Y`")" 'Scarlett.Chan@team.telstra.com' 'mso.telstrahkic@subex.com' 'devansh.rajan@subex.com' 'sharath.shekar@subex.com' <$run_path/body.html -a $extract_path/$file_of_month
+
+#cat $run_path/body.txt |mailx -s "$(echo -e " Allianz Extract -`TZ= date +%b-%Y`")" -a $extract_path/$file_of_month  'devansh.rajan@subex.com' 'sharath.shekar@subex.com'
+
+fi
+
