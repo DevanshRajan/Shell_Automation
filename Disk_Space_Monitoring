@@ -1,0 +1,75 @@
+###############################################################################################
+# --------------------------------------------------------------------------------------------#
+#     Automation Tool Developed by SUBEX Group Inc. for Telstra   #
+# --------------------------------------------------------------------------------------------#
+#                       Disk Space Monitoring                                                 #
+# --------------------------------------------------------------------------------------------#
+#                                                                                             #
+#                      AUTHOR: Devansh Rajan                                                  #
+#                      EMAILID: devansh.rajan@subex.com                                       #
+#                      DONOT MODIFY THE SCRIPT                                                #
+#                                                                          © SUBEX Group Inc. #
+###############################################################################################
+
+#!/bin/bash
+. /home/rocps/.bashrc
+run_path="/rocps/Subex_Working_Area/Dev_Automations/disk_space"
+
+cd $run_path
+rm -rf $run_path/*.report
+
+*.report
+df -Ph | awk '{print $6 "|" $5}'| sed 's,%,,g' >  $run_path/disk.txt
+echo "<p><br>Hi Team,<br><br>Please find critical disk space report for the day.</p>"  >> $run_path/$$.report
+
+echo "<html>"  >> $run_path/$$.report
+echo "<body>"  >> $run_path/$$.report
+echo "</br>"  >> $run_path/$$.report
+echo "<table border=1 width=50% align="center">"  >> $run_path/$$.report
+echo "<tr bgcolor=##05F7D3 background=cvf_bkg.png><td colspan=3 align=center><b><b><U>Critical Disk Space for -`date +"%m-%d-%Y"` </U></b></td></tr>" >> $run_path/$$.report
+echo "<tr><th>Mounted Disk Partition</th><th>% Used Space </th><th>Status</th><tr>"  >> $run_path/$$.report
+
+declare -i m=0
+declare -i b=0
+
+while read row
+do
+                                                a=`echo $row |cut -d '|' -f1 `
+                                                b=`echo $row |cut -d "|" -f2 `
+
+if [ $b -gt 80 ]
+then
+echo "<tr bgcolor=#d3e2e9><td><b>$a</b></td><td><P ALIGN="center"><b>$b<b></P ALIGN="Center"></td><td id="orange"><P ALIGN="center"><b>Critical<b></P ALIGN="Center"></td></tr>"  >> $run_path/$$.report
+m=$(( m + 1 ))
+
+elif [ $b -gt 70 ]
+then
+echo "<tr bgcolor=#d3e2e9><td><b>$a</b></td><td><P ALIGN="center"><b>$b<b></P ALIGN="Center"></td><td id="orange"><P ALIGN="center"><b>Warning<b></P ALIGN="Center"></td></tr>"  >> $run_path/$$.report
+m=$(( m + 1 ))
+else
+continue
+
+fi
+done< $run_path/disk.txt
+
+echo "</table>" >>$run_path/$$.report
+echo "</body>"  >> $run_path/$$.report
+echo "</table>" >>$run_path/$$.report
+echo "</body>"  >> $run_path/$$.report
+
+echo "<p><br><br><br><strong>Regards,<br>Devansh Rajan</strong></p>"  >> $run_path/$$.report
+
+
+echo "</html>"  >> $run_path/$$.report
+cat $run_path/$$.report > $run_path/Report.html
+
+if [ $m -gt 0 ]
+then
+
+mutt -e 'set content_type=text/html' -s "$(echo -e "Disk Space Monitoring_`TZ= date +%d-%b-%Y`")"  'sharath.shekar@subex.com'  'parnika.shrivastava@subex.com' 'devendra.pandey@subex.com' 'jithendra.k@subex.com' -c 'devansh.rajan@subex.com' <$run_path/Report.html
+
+mutt -e 'set content_type=text/html' -s "$(echo -e "Disk Space Monitoring_`TZ= date +%d-%b-%Y`")" 'devansh.rajan@subex.com'  <$run_path/Report.html
+
+fi
+#rm -rf *.html *.report disk.txt
+
