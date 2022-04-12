@@ -1,0 +1,59 @@
+###############################################################################################
+# --------------------------------------------------------------------------------------------#
+#     Automation Tool Developed by SUBEX Group Inc. for Telstra   #
+# --------------------------------------------------------------------------------------------#
+#                       Controller Script for Bill Profile extract Automation                      #
+# --------------------------------------------------------------------------------------------#
+#                                                                                             #
+#                      AUTHOR: Devansh Rajan                                                  #
+#                      EMAILID: devansh.rajan@subex.com                                           #
+#                      DONOT MODIFY THE SCRIPT                                                #
+#                                                                          © SUBEX Group Inc. #
+###############################################################################################
+
+#!/bin/bash
+. /home/rocps/.bashrc
+
+run_path='/rocps/Subex_Working_Area/Rep_Test/Bill_Profile_Extract_Varun'
+cd $run_path
+
+
+#rm -rf $run_path/test.sql $run_path/*MRC_Services*
+
+bb=`date +%b`
+month=`echo $bb | awk '{print toupper($0)}'`
+year=`date +%y`
+
+cd $run_path
+
+echo "select gccm.GCM_BILLING_ENTITY,acc.ACC_ACCT_REF_NO,acc.ACC_DISPLAY,bped.BED_ACCOUNT_NUMBER,bp.bip_name,bps.bfs_name,bped.BED_IS_PDF_REQUIRED,bped.BED_IS_TCONNECT_TEMPLATE,bdm.BVM_DELIVERY_METHOD from (select acc_id,ACC_ACCT_REF_NO,ACC_DISPLAY from account) acc, (select bip_id,bip_name,acc_id  from bill_profile) bp, (select bip_id,lge_id,BED_ACCOUNT_NUMBER,BED_IS_PDF_REQUIRED,BED_IS_TCONNECT_TEMPLATE,bfs_id from BILL_PROFILE_EXTRA_DETAILS)bped, (select lge_id,gcm_id from legal_entity) le, (select bfs_id,bfs_name from BILL_PROFILE_STATUS) bps, (select gcm_id,GCM_BILLING_ENTITY from GL_CUSTOMER_CODE_MAP) gccm, (select bvm_id,BVM_DELIVERY_METHOD from BILL_DELIVERY_METHOD) bdm, (select bip_id,bvm_id from BILL_PROFILE_EXTRA_PRINT) bpep where bdm.bvm_id=bpep.bvm_id and bp.bip_id=bpep.bip_id and acc.acc_id=bp.acc_id and bp.bip_id=bped.bip_id and bped.lge_id=le.lge_id and le.gcm_id=gccm.gcm_id and bped.bfs_id=bps.bfs_id ;">$run_path/query.sql
+
+
+sqlplus -s -m "HTML ON TABLE 'BORDER="4"'" << EOF > Report.html ROCPS_REF/ZnWT1tVtYzeyvhrf@PSREFPRD
+
+set feedback off
+set heading off
+
+@query.sql;
+
+EOF
+cd $run_path
+
+
+
+sed -i '1,8d' $run_path/Report.html
+cp -rf $run_path/start.html  $run_path/Bill_Profile_Extract.html
+cat Report.html>>$run_path/Bill_Profile_Extract.html
+cd $run_path
+cp -rf $run_path/Bill_Profile_Extract.html $run_path/Bill_Profile_Extract.xls
+final_output="Bill_Profile_Extract`TZ= date +%d-%b-%Y`.xls"
+cp -rf $run_path/Bill_Profile_Extract.xls $run_path/$final_output
+zip $final_output.zip $final_output
+
+#cp -rf $final_output.zip /winsync_updated/ROC_CIFS_WINS/Active_MRC_Services
+
+mutt -e 'set content_type=text/html' -s "$(echo -e " Bill Profile Extract -`date +"%m-%d-%Y"`")" 'devansh.rajan@subex.com' 'Varun.Rathore@team.telstra.com' 'Olivia.Mak@team.telstra.com' 'mso.telstrahkic@subex.com' 'Scarlett.Chan@team.telstra.com' 'sharath.shekar@subex.com' 'Toby.Yip@team.telstra.com' 'Mayuri.Khullar@team.telstra.com' <$run_path/body.html -a $run_path/$final_output.zip
+
+#cat $run_path/body.txt |mailx -s "$(echo -e " Bill Profile Extract -`TZ= date +%d-%b-%Y`")" -a $run_path/$final_output.zip    'devansh.rajan@subex.com'  'sharath.shekar@subex.com'
+
+
