@@ -1,0 +1,26 @@
+#!/bin/bash
+
+DATE=`date +%Y_%m_%d_%H_%M_%S`
+SCRIPT_LOG=/rocps_data01/Backup/ROC_Performance/THREAD_LOGS/tc_thread_$DATE.logs
+echo "Starting Thread Dump $DATE ..." >>$SCRIPT_LOG
+
+DATE3=`date +%Y_%m_%d_%H_%M_%S`
+echo "Thread Dump In Progress... $DATE3 " >>$SCRIPT_LOG
+ss="`/usr/bin/jdk1.6.0_33/bin/jps -m | grep "ServerService" | awk '{print $1}'`"
+sc="`/usr/bin/jdk1.6.0_33/bin/jps -m|grep "StreamController"|awk '{print $1}'`"
+tc1="`/usr/bin/jdk1.6.0_33/bin/jps -m|grep "ControllerId=1"|awk '{print $1}'`"
+tc2="`/usr/bin/jdk1.6.0_33/bin/jps -m|grep "ControllerId=2"|awk '{print $1}'`"
+
+Thread_TC_1_filename=/rocps_data01/Backup/ROC_Performance/Thread_DUMP/TC_1_ThreadDump_$DATE3.log
+Thread_TC_2_filename=/rocps_data01/Backup/ROC_Performance/Thread_DUMP/TC_2_ThreadDump_$DATE3.log
+Thread_SC_filename=/rocps_data01/Backup/ROC_Performance/Thread_DUMP/SC_ThreadDump_$DATE3.log
+Thread_Server_filename=/rocps_data01/Backup/ROC_Performance/Thread_DUMP/Server_ThreadDump_$DATE3.log
+
+/usr/bin/jdk1.6.0_33/bin/jstack -l $tc1 >>$Thread_TC_1_filename
+/usr/bin/jdk1.6.0_33/bin/jstack -l $tc2 >>$Thread_TC_2_filename
+/usr/bin/jdk1.6.0_33/bin/jstack -l $sc >>$Thread_SC_filename
+/usr/bin/jdk1.6.0_33/bin/jstack -l $ss  >>$Thread_Server_filename
+kill -quit $tc1
+kill -quit $tc2
+DATE7=`date +%Y_%m_%d_%H_%M_%S`
+echo "Process Completed $DATE7" >>$SCRIPT_LOG
